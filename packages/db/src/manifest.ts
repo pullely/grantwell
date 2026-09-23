@@ -183,5 +183,14 @@ export const manifest: MigrationManifest = {
       description:
         "Connection pointer on the inbound-delivery inbox (nullable connection_id + partial index) — lets the per-connection delivery log scope precisely; attributed by the IG2 cron drain",
     },
+    {
+      id: "200_grant_core",
+      context: "grant",
+      path: "200_grant_core/up.sql",
+      checksum:
+        "c97b4aa2cd5e050cd510bb16a19ae1987aec2489c81765c98c5f8546c2487cc4",
+      description:
+        "Grants foundation (GW1) — a nonprofit's grants (funder, amount in integer cents, period, restrictions, grant lead), the report and deliverable deadlines each award creates with the person responsible and submitted_at held to the status, and the award letters stored in R2",
+    },
   ],
 };

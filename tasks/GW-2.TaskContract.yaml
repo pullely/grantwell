@@ -1,0 +1,49 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: GW-2
+spec:
+  goal: A nonprofit can record a grant, list the report and deliverable deadlines it creates with the person responsible, see every open deadline across its grants, mark one submitted (on time or late, derived), and store its award letter in R2.
+  # Component refs, fully qualified (bare names and paths do not match — runbook
+  # trap 15). identity-worker, membership-worker, api-edge and web-console-next
+  # carry the SOLO_MODE switch (Solo goes off: several staff per nonprofit, several
+  # nonprofits per grant writer). Every other worker is here for runbook trap 17:
+  # this task changes packages/db (the trap-16 D1 fix and the grant context),
+  # packages/policy-engine (grant.* actions) and packages/contracts (the
+  # notifications allow-list), and a worker only redeploys when its own
+  # component.yaml changes.
+  affects:
+    - default/grantwell/db
+    - default/grantwell/db-tests
+    - default/grantwell/db-migrate
+    - default/grantwell/contracts
+    - default/grantwell/sdk
+    - default/grantwell/policy-engine
+    - default/grantwell/policy-engine-tests
+    - default/grantwell/cloudflare-r2
+    - default/grantwell/grant-worker
+    - default/grantwell/grant-worker-tests
+    - default/grantwell/api-edge
+    - default/grantwell/api-edge-tests
+    - default/grantwell/events-worker
+    - default/grantwell/notifications-worker
+    - default/grantwell/identity-worker
+    - default/grantwell/membership-worker
+    - default/grantwell/web-console-next
+    - default/grantwell/web-console-next-tests
+    - default/grantwell/admin-worker
+    - default/grantwell/billing-worker
+    - default/grantwell/config-worker
+    - default/grantwell/integrations-worker
+    - default/grantwell/metering-worker
+    - default/grantwell/policy-worker
+    - default/grantwell/projects-worker
+    - default/grantwell/webhooks-worker
+  doneWhen:
+    - the trap-16 D1 fix (factory/patches/cirrus-d1-fix.patch) is applied, so audited writes and organization create work on D1
+    - migration 200_grant_core is in the manifest, replays green against node:sqlite, and is applied on stage and prod
+    - on stage a signed-in user creates an organization (201), a grant, two deadlines, and uploads a PDF award letter that downloads with the same SHA-256
+    - a deadline marked submitted on or before its due date reports onTime true; after it, false
+    - a non-member reading a grant gets 404; a viewer creating one gets 404
+    - tests/grant-worker runs the worker over a real SQLite engine and is green in CI
+  gates: []

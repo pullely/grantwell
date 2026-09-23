@@ -36,12 +36,22 @@ export function memberPublicId(uuid: string): string {
   return `mem_${uuidToHex(uuid)}`;
 }
 
+export function grantPublicId(uuid: string): string {
+  return `grt_${uuidToHex(uuid)}`;
+}
+
+export function grantDeadlinePublicId(uuid: string): string {
+  return `gdl_${uuidToHex(uuid)}`;
+}
+
 const SUBJECT_KIND_PREFIX: Record<string, (uuid: string) => string> = {
   organization: orgPublicId,
   project: projectPublicId,
   environment: environmentPublicId,
   invitation: invitationPublicId,
   member: memberPublicId,
+  grant: grantPublicId,
+  grant_deadline: grantDeadlinePublicId,
 };
 
 export function toPublicId(kind: string, rawId: string): string {
