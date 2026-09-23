@@ -46,7 +46,11 @@
         {
           "binding": "BILLING_WORKER",
           "service": "grantwell-billing-worker-stage"
-        }// @cycle-break:membership-worker->notifications-worker:LAogICAgICAgIHsKICAgICAgICAgICJiaW5kaW5nIjogIk5PVElGSUNBVElPTlNfV09SS0VSIiwKICAgICAgICAgICJzZXJ2aWNlIjogImdyYW50d2VsbC1ub3RpZmljYXRpb25zLXdvcmtlci1zdGFnZSIKICAgICAgICB9
+        },
+        {
+          "binding": "NOTIFICATIONS_WORKER",
+          "service": "grantwell-notifications-worker-stage"
+        }
       ]
     },
     "prod": {
@@ -71,7 +75,11 @@
         {
           "binding": "BILLING_WORKER",
           "service": "grantwell-billing-worker-prod"
-        }// @cycle-break:membership-worker->notifications-worker:LAogICAgICAgIHsKICAgICAgICAgICJiaW5kaW5nIjogIk5PVElGSUNBVElPTlNfV09SS0VSIiwKICAgICAgICAgICJzZXJ2aWNlIjogImdyYW50d2VsbC1ub3RpZmljYXRpb25zLXdvcmtlci1wcm9kIgogICAgICAgIH0=
+        },
+        {
+          "binding": "NOTIFICATIONS_WORKER",
+          "service": "grantwell-notifications-worker-prod"
+        }
       ]
     }
   }
