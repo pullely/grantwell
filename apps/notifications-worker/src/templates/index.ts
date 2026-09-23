@@ -169,7 +169,43 @@ const renderInvitationAccepted: TemplateRenderer = (data, opts) => {
   return { subject, html, text };
 };
 
+/**
+ * Grantwell: a report or deliverable has been assigned to this person. Names
+ * the grant, the funder and the due date — the three facts they need.
+ */
+const renderGrantDeadlineAssigned: TemplateRenderer = (data, opts) => {
+  const grantTitle = str(data, "grantTitle");
+  const funder = str(data, "funderName");
+  const deadline = str(data, "deadlineTitle");
+  const kind = str(data, "kindLabel");
+  const dueOn = str(data, "dueOn");
+  const grantUrl = str(data, "grantUrl");
+  const brand = opts.brandName ?? "";
+  const subject = `Due ${dueOn}: ${deadline} for ${funder || grantTitle}`;
+
+  const text = [
+    `You are responsible for "${deadline}" (${kind}) on the grant "${grantTitle}" from ${funder}.`,
+    `It is due on ${dueOn}. You will be reminded as the date approaches.`,
+    ...(grantUrl ? [grantUrl] : []),
+  ].join("\n\n");
+
+  const html = htmlShell(
+    `${escapeHtml(deadline)} is yours`,
+    [
+      `<p style="margin:0 0 16px;font-size:14px;">You are responsible for <strong>${escapeHtml(deadline)}</strong> (${escapeHtml(kind)}) on the grant <strong>${escapeHtml(grantTitle)}</strong> from ${escapeHtml(funder)}.</p>`,
+      `<p style="margin:0 0 16px;font-size:14px;">It is due on <strong>${escapeHtml(dueOn)}</strong>. You will be reminded as the date approaches.</p>`,
+      grantUrl
+        ? `<p style="margin:0 0 16px;"><a href="${escapeHtml(grantUrl)}" style="display:inline-block;padding:10px 16px;background:#2f5d6b;color:#ffffff;border-radius:6px;text-decoration:none;font-size:14px;">Open the grant</a></p>`
+        : "",
+    ].join(""),
+    escapeHtml(brand ? `Sent by ${brand}` : "Sent by Grantwell"),
+  );
+
+  return { subject, html, text };
+};
+
 const TEMPLATES: Record<string, TemplateRenderer> = {
+  "grant.deadline.assigned": renderGrantDeadlineAssigned,
   "auth.magic_link": renderMagicLink,
   "invitation.created": renderInvitationCreated,
   "invitation.accepted": renderInvitationAccepted,

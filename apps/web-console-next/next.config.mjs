@@ -38,10 +38,10 @@ const nextConfig = {
   },
   env: {
     NEXT_PUBLIC_DEPLOY_ENV: process.env.NEXT_PUBLIC_DEPLOY_ENV ?? "",
-    // M0 / Solo profile (Grantwell ships single-user). Build with
-    // NEXT_PUBLIC_SOLO_MODE=false to restore the full multi-tenant baseline.
+    // Solo profile OFF: a nonprofit's staff share one organization and a
+    // grant writer belongs to several, so the multi-tenant surfaces stay on.
     // See specs/profiles/solo-m0.md.
-    NEXT_PUBLIC_SOLO_MODE: process.env.NEXT_PUBLIC_SOLO_MODE ?? "true",
+    NEXT_PUBLIC_SOLO_MODE: process.env.NEXT_PUBLIC_SOLO_MODE ?? "false",
   },
 };
 

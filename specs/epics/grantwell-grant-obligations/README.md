@@ -26,7 +26,7 @@ organization's next deadline on one page.
 
 | Field | Value |
 |-------|-------|
-| Status | Draft |
+| Status | In progress — GW0 landed (#9); GW1 in review |
 | Cluster | **GW** (GW0–GW3) |
 | Owner(s) | `apps/grant-worker` (grants, deadlines, award letters, the reminder cron, the portfolio) · `apps/api-edge` (the facade) · `packages/db` (migrations `200`–`220`) · `packages/contracts` + `packages/sdk` (the wire) · `infra/terraform/cloudflare-r2` (the award-letter bucket) · `apps/notifications-worker` (the templates) · `apps/web-console-next` (the surface) |
 | Builds on | `cirrus baseline-v12` — organizations as nonprofits, members as staff and grant writers, the policy engine for who may edit, `notifications-worker` for email, the audit trail in `events-worker`, api-edge rate limiting |

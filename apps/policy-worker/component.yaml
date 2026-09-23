@@ -52,4 +52,4 @@ spec:
     surface: policy
     runtime: cloudflare
 # ci: trigger full-component verification (orun v2.12.0 upgrade — PR #183)
-# orun: redeploy 04-workers 20260923T140207Z
+# orun: redeploy GW1 — packages/db (trap-16 D1 fix, grant context), packages/policy-engine (grant.* actions), packages/contracts (grant-worker notifications caller)
