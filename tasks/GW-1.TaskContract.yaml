@@ -1,0 +1,13 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: GW-1
+spec:
+  goal: The Grantwell epic's five design documents are on main and attached to the epic in Orunbase.
+  affects:
+    - specs/epics/grantwell-grant-obligations
+    - tasks
+  doneWhen:
+    - specs/epics/grantwell-grant-obligations holds README.md, design.md, implementation-plan.md, risks-and-open-questions.md and IMPLEMENTATION-STATUS.md on main
+    - orun spec list --epic grantwell-grant-obligations shows all five documents
+  gates: []
