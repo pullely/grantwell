@@ -192,5 +192,14 @@ export const manifest: MigrationManifest = {
       description:
         "Grants foundation (GW1) — a nonprofit's grants (funder, amount in integer cents, period, restrictions, grant lead), the report and deliverable deadlines each award creates with the person responsible and submitted_at held to the status, and the award letters stored in R2",
     },
+    {
+      id: "210_grant_reminders",
+      context: "grant",
+      path: "210_grant_reminders/up.sql",
+      checksum:
+        "650f20744edfdf193e213f6d11306450cfa7d72cecf453478f9a403143c49d17",
+      description:
+        "The reminder ladder (GW2) — one row per rung claimed for a deadline (30/14/7/1/0 days before, 1 and 7 after), unique on deadline + rung + due date so a rung is sent once across any number of sweeps and moving the due date re-arms the ladder",
+    },
   ],
 };

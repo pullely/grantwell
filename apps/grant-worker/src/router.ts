@@ -3,6 +3,7 @@ import { handleHealth } from "./handlers/health.js";
 import { handleCreateGrant, handleGetGrant, handleListGrants, handleUpdateGrant } from "./handlers/grants.js";
 import { handleCreateDeadline, handleListDeadlines, handleUpdateDeadline } from "./handlers/deadlines.js";
 import { handleGetDocument, handleUploadDocument } from "./handlers/documents.js";
+import { handleDeadlineCalendar, handleGrantStats, handleRunReminders } from "./handlers/reminders.js";
 import { errorResponse, methodNotAllowed, notFound } from "./http.js";
 import {
   generateRequestId,
@@ -43,6 +44,10 @@ const GRANT_DEADLINE_RE = /^\/v1\/organizations\/([^/]+)\/grants\/([^/]+)\/deadl
 const GRANT_DOCUMENTS_RE = /^\/v1\/organizations\/([^/]+)\/grants\/([^/]+)\/documents$/;
 const GRANT_DOCUMENT_RE = /^\/v1\/organizations\/([^/]+)\/grants\/([^/]+)\/documents\/([^/]+)$/;
 const ORG_DEADLINES_RE = /^\/v1\/organizations\/([^/]+)\/deadlines$/;
+// GW2 — matched before GRANT_RE, which would read "stats" as a grant id.
+const GRANT_STATS_RE = /^\/v1\/organizations\/([^/]+)\/grants\/stats$/;
+const ORG_CALENDAR_RE = /^\/v1\/organizations\/([^/]+)\/deadlines\/calendar$/;
+const ORG_REMINDERS_RUN_RE = /^\/v1\/organizations\/([^/]+)\/reminders\/run$/;
 
 function unauthenticated(requestId: string): Response {
   return errorResponse("unauthenticated", "Authentication required", 401, requestId);
@@ -51,6 +56,31 @@ function unauthenticated(requestId: string): Response {
 async function routeOrg(request: Request, env: Env, requestId: string, path: string): Promise<Response | null> {
   let m: RegExpMatchArray | null;
   const method = request.method;
+
+  if ((m = path.match(GRANT_STATS_RE))) {
+    const org = parseOrgPublicId(m[1]!);
+    if (!org) return notFound(requestId);
+    if (method !== "GET") return methodNotAllowed(requestId);
+    const actor = resolveActor(request);
+    if (!actor) return unauthenticated(requestId);
+    return handleGrantStats(env, requestId, actor, org);
+  }
+  if ((m = path.match(ORG_CALENDAR_RE))) {
+    const org = parseOrgPublicId(m[1]!);
+    if (!org) return notFound(requestId);
+    if (method !== "GET") return methodNotAllowed(requestId);
+    const actor = resolveActor(request);
+    if (!actor) return unauthenticated(requestId);
+    return handleDeadlineCalendar(request, env, requestId, actor, org);
+  }
+  if ((m = path.match(ORG_REMINDERS_RUN_RE))) {
+    const org = parseOrgPublicId(m[1]!);
+    if (!org) return notFound(requestId);
+    if (method !== "POST") return methodNotAllowed(requestId);
+    const actor = resolveActor(request);
+    if (!actor) return unauthenticated(requestId);
+    return handleRunReminders(env, requestId, actor, org);
+  }
 
   if ((m = path.match(GRANT_DOCUMENT_RE))) {
     const org = parseOrgPublicId(m[1]!);

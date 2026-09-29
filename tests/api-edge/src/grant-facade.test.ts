@@ -53,6 +53,10 @@ describe("api-edge grant facade", () => {
       "/v1/organizations/org_a/grants/grt_b/documents",
       "/v1/organizations/org_a/grants/grt_b/documents/gdc_d",
       "/v1/organizations/org_a/deadlines",
+      // GW2
+      "/v1/organizations/org_a/deadlines/calendar",
+      "/v1/organizations/org_a/grants/stats",
+      "/v1/organizations/org_a/reminders/run",
     ]) {
       expect(isGrantRoute(p)).toBe(true);
     }
@@ -62,6 +66,8 @@ describe("api-edge grant facade", () => {
       "/v1/organizations/org_a/members",
       "/v1/organizations/org_a/grants/grt_b/budget",
       "/v1/organizations/org_a/deadlines/gdl_c",
+      "/v1/organizations/org_a/reminders",
+      "/v1/organizations/org_a/reminders/run/now",
     ]) {
       expect(isGrantRoute(p)).toBe(false);
     }

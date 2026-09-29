@@ -2,12 +2,15 @@ import type {
   CreateGrantDeadlineRequest,
   CreateGrantRequest,
   GetGrantResponse,
+  GrantDeadlineCalendarResponse,
   GrantDeadlineResponse,
   GrantDocumentKind,
   GrantDocumentResponse,
   GrantResponse,
+  GrantStatsResponse,
   ListGrantDeadlinesResponse,
   ListGrantsResponse,
+  RunGrantRemindersResponse,
   UpdateGrantDeadlineRequest,
   UpdateGrantRequest,
 } from "@saas/contracts/grant";
@@ -86,6 +89,24 @@ export class GrantClient {
       { method: "GET", path: `${org(orgId)}/deadlines`, query },
       opts,
     );
+  }
+
+  /** GET /v1/organizations/:orgId/deadlines/calendar?month=YYYY-MM — every deadline due that month, any state. */
+  deadlineCalendar(orgId: string, month: string, opts: RequestOptions = {}): Promise<GrantDeadlineCalendarResponse> {
+    return this.transport.request<GrantDeadlineCalendarResponse>(
+      { method: "GET", path: `${org(orgId)}/deadlines/calendar`, query: { month } },
+      opts,
+    );
+  }
+
+  /** GET /v1/organizations/:orgId/grants/stats — on-time rate, overdue and upcoming counts. */
+  stats(orgId: string, opts: RequestOptions = {}): Promise<GrantStatsResponse> {
+    return this.transport.request<GrantStatsResponse>({ method: "GET", path: `${org(orgId)}/grants/stats` }, opts);
+  }
+
+  /** POST /v1/organizations/:orgId/reminders/run — today's reminder ladder for this org, now. Repeat-safe. */
+  runReminders(orgId: string, opts: RequestOptions = {}): Promise<RunGrantRemindersResponse> {
+    return this.transport.request<RunGrantRemindersResponse>({ method: "POST", path: `${org(orgId)}/reminders/run`, body: {} }, opts);
   }
 
   /**

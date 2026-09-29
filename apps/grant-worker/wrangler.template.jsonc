@@ -14,6 +14,11 @@
   "vars": {
     "ENVIRONMENT": "local"
   },
+  // The reminder ladder (GW2): 13:00 UTC is morning in every US time zone, so a
+  // reminder is in the inbox for the working day. Inherited by stage and prod.
+  "triggers": {
+    "crons": ["0 13 * * *"]
+  },
   "env": {
     "dev": {
       "vars": {

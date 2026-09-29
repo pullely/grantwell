@@ -5,12 +5,14 @@ import { resolveActor } from "./resolve-actor.js";
 import { createTimings } from "@saas/contracts/timing";
 
 // Grants (grant-worker). One authenticated lane, /v1/organizations/{org}/…:
-// grants, their deadlines and documents, and the org-wide deadline list.
+// grants, their deadlines and documents, the org-wide deadline list, and (GW2)
+// the month calendar, the on-time stats (grants/stats) and the on-demand
+// reminder run.
 // resolveActor → actor headers over the GRANT_WORKER binding, like every other
 // org route; the worker runs membership + policy itself.
 
 const GRANT_RE =
-  /^\/v1\/organizations\/[^/]+\/(?:grants(?:\/[^/]+(?:\/(?:deadlines|documents)(?:\/[^/]+)?)?)?|deadlines)$/;
+  /^\/v1\/organizations\/[^/]+\/(?:grants(?:\/[^/]+(?:\/(?:deadlines|documents)(?:\/[^/]+)?)?)?|deadlines(?:\/calendar)?|reminders\/run)$/;
 
 const FORWARDED_HEADERS = ["content-type", "content-length", "traceparent", "idempotency-key", "x-filename"];
 const BODY_METHODS = new Set(["POST", "PATCH", "PUT"]);
