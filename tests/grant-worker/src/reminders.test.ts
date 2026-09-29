@@ -105,7 +105,7 @@ describe("the daily sweep", () => {
     const first = await runReminders(w.env, at(TODAY));
     expect(first.today).toBe(TODAY);
     expect(first.claimed).toHaveLength(1);
-    expect(first.claimed[0]).toMatchObject({ deadlineId: deadline, rung: "d7", daysRemaining: 7, escalated: false });
+    expect(first.claimed[0]).toMatchObject({ deadlineId: deadline, rung: "d7", daysRemaining: 7, escalated: false, notified: 1 });
     expect(first.claimed[0]!.recipients).toEqual(["program@literacy.example"]);
 
     const second = await runReminders(w.env, at(TODAY));

@@ -95,14 +95,16 @@ export async function runReminders(env: Env, now: Date, opts: RunRemindersOption
       });
       if (!claimed) continue;
 
+      let notified = 0;
       for (const address of recipients) {
         try {
-          await sendDeadlineReminder(env, requestId, candidate, {
+          const accepted = await sendDeadlineReminder(env, requestId, candidate, {
             rung,
             daysRemaining,
             address,
             role: address === candidate.assigneeEmail?.trim().toLowerCase() ? "assignee" : "lead",
           });
+          if (accepted) notified += 1;
         } catch {
           // Advisory: the claim stands (at most once); the audit row records the attempt.
         }
@@ -116,6 +118,7 @@ export async function runReminders(env: Env, now: Date, opts: RunRemindersOption
         daysRemaining,
         recipients,
         escalated,
+        notified,
       };
       result.claimed.push(claim);
 

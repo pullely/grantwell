@@ -220,6 +220,8 @@ export interface GrantReminderClaim {
   daysRemaining: number;
   recipients: string[];
   escalated: boolean;
+  /** Recipients whose email notifications-worker accepted (GW3); the claim stands either way. */
+  notified: number;
 }
 
 export interface RunGrantRemindersResponse {
