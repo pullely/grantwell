@@ -3,13 +3,14 @@ import {
   type GrantDeadlineKind,
   type GrantDeadlineStatus,
   type GrantDocumentKind,
+  type GrantStats,
   type GrantStatus,
   type PublicGrant,
   type PublicGrantDeadline,
   type PublicGrantDeadlineWithGrant,
   type PublicGrantDocument,
 } from "@saas/contracts/grant";
-import type { Grant, GrantDeadline, GrantDeadlineWithGrant, GrantDocument } from "@saas/db/grant";
+import type { Grant, GrantDeadline, GrantDeadlineCounts, GrantDeadlineWithGrant, GrantDocument } from "@saas/db/grant";
 import { deadlinePublicId, documentPublicId, grantPublicId, orgPublicId } from "./ids.js";
 
 export function toPublicDeadline(d: GrantDeadline): PublicGrantDeadline {
@@ -67,5 +68,18 @@ export function toPublicDocument(d: GrantDocument): PublicGrantDocument {
     byteSize: d.byteSize,
     sha256: d.sha256,
     uploadedAt: d.uploadedAt,
+  };
+}
+
+/** Counts to the wire's stats: the on-time rate is null until something was submitted. */
+export function toGrantStats(c: GrantDeadlineCounts | undefined): GrantStats {
+  const counts = c ?? { open: 0, overdue: 0, dueNext30: 0, submitted: 0, submittedOnTime: 0 };
+  return {
+    open: counts.open,
+    overdue: counts.overdue,
+    dueNext30: counts.dueNext30,
+    submitted: counts.submitted,
+    submittedOnTime: counts.submittedOnTime,
+    onTimeRate: counts.submitted === 0 ? null : counts.submittedOnTime / counts.submitted,
   };
 }

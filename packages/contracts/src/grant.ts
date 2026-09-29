@@ -50,6 +50,7 @@ export const GRANT_EVENT_TYPES = [
   "grant.deadline.updated",
   "grant.deadline.submitted",
   "grant.document.uploaded",
+  "grant.reminder.sent",
 ] as const;
 export type GrantEventType = (typeof GRANT_EVENT_TYPES)[number];
 
@@ -171,6 +172,91 @@ export interface ListGrantDeadlinesResponse {
 
 export interface GrantDocumentResponse {
   document: PublicGrantDocument;
+}
+
+// ── Reminders, the calendar and the on-time rate (GW2) ───────
+
+/**
+ * The reminder ladder, latest rung last. `days` is days until due (negative
+ * once overdue). A deadline sits on the last rung whose threshold it has
+ * reached, so a sweep that missed a day (or a deadline created 20 days out)
+ * still lands on the right rung, and each rung is claimed once per due date.
+ */
+export const GRANT_REMINDER_RUNGS = [
+  { rung: "d30", days: 30 },
+  { rung: "d14", days: 14 },
+  { rung: "d7", days: 7 },
+  { rung: "d1", days: 1 },
+  { rung: "d0", days: 0 },
+  { rung: "late1", days: -1 },
+  { rung: "late7", days: -7 },
+] as const;
+export type GrantReminderRung = (typeof GRANT_REMINDER_RUNGS)[number]["rung"];
+
+/** Rungs that add the grant lead to the assignee: one day out, the day, and every overdue rung. */
+export const GRANT_ESCALATION_RUNGS: ReadonlySet<GrantReminderRung> = new Set(["d1", "d0", "late1", "late7"]);
+
+/** How far past due the sweep still looks; older open deadlines are not chased. */
+export const GRANT_REMINDER_OVERDUE_HORIZON_DAYS = 30;
+
+/** Whole days from `today` to `dueOn` (both YYYY-MM-DD); negative when past due. */
+export function grantDaysUntil(dueOn: string, today: string): number {
+  return Math.round((Date.parse(`${dueOn}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) / 86_400_000);
+}
+
+/** The rung a deadline `days` from due is on, or null when it is not yet (or no longer) chased. */
+export function grantReminderRung(days: number): GrantReminderRung | null {
+  if (days > 30 || days < -GRANT_REMINDER_OVERDUE_HORIZON_DAYS) return null;
+  let current: GrantReminderRung | null = null;
+  for (const r of GRANT_REMINDER_RUNGS) if (days <= r.days) current = r.rung;
+  return current;
+}
+
+export interface GrantReminderClaim {
+  deadlineId: string;
+  grantId: string;
+  rung: GrantReminderRung;
+  dueOn: string;
+  daysRemaining: number;
+  recipients: string[];
+  escalated: boolean;
+}
+
+export interface RunGrantRemindersResponse {
+  /** The UTC date the ladder was evaluated for. */
+  today: string;
+  /** Open deadlines on a rung today. */
+  considered: number;
+  /** Rungs newly claimed (and sent) by this run; a second run the same day claims none. */
+  claimed: GrantReminderClaim[];
+  /** Deadlines on a rung with nobody to tell (no assignee, no grant lead). */
+  skippedNoRecipient: number;
+}
+
+export interface GrantDeadlineCalendarResponse {
+  /** YYYY-MM */
+  month: string;
+  /** Every deadline due in the month, whatever its state, due_on ascending. */
+  deadlines: PublicGrantDeadlineWithGrant[];
+}
+
+export interface GrantStats {
+  /** Deadlines still open. */
+  open: number;
+  /** Open deadlines past their due date. */
+  overdue: number;
+  /** Open deadlines due in the next 30 days (today included). */
+  dueNext30: number;
+  submitted: number;
+  submittedOnTime: number;
+  /** submittedOnTime / submitted, 0–1; null until something has been submitted. */
+  onTimeRate: number | null;
+}
+
+export interface GrantStatsResponse {
+  /** The UTC date "overdue" was judged against. */
+  today: string;
+  stats: GrantStats;
 }
 
 /** Format integer cents as a currency amount for display ("$12,500.00"). */

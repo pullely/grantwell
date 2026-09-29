@@ -204,8 +204,64 @@ const renderGrantDeadlineAssigned: TemplateRenderer = (data, opts) => {
   return { subject, html, text };
 };
 
+/**
+ * Grantwell: one rung of a deadline's reminder ladder (GW2). To the assignee
+ * it says when the obligation is due; to the grant lead (escalation — one day
+ * out, the day itself, and overdue) it also names who is responsible.
+ */
+const renderGrantDeadlineReminder: TemplateRenderer = (data, opts) => {
+  const grantTitle = str(data, "grantTitle");
+  const funder = str(data, "funderName");
+  const deadline = str(data, "deadlineTitle");
+  const kind = str(data, "kindLabel");
+  const dueOn = str(data, "dueOn");
+  const assignee = str(data, "assigneeEmail");
+  const days = Number(data.daysRemaining ?? 0);
+  const lead = data.role === "lead";
+  const brand = opts.brandName ?? "";
+  const overdue = days < 0;
+  const plural = (n: number) => (n === 1 ? "" : "s");
+  const when = overdue
+    ? `was due ${dueOn} and is ${-days} day${plural(-days)} overdue`
+    : days === 0
+      ? `is due today (${dueOn})`
+      : `is due in ${days} day${plural(days)} (${dueOn})`;
+  const subject = overdue
+    ? `OVERDUE: ${deadline} for ${funder || grantTitle} (due ${dueOn})`
+    : days === 0
+      ? `Due today: ${deadline} for ${funder || grantTitle}`
+      : `Due in ${days} day${plural(days)}: ${deadline} for ${funder || grantTitle}`;
+  const who = lead
+    ? assignee
+      ? `${assignee} is responsible for it. You are receiving this as the grant lead.`
+      : "Nobody is assigned to it. You are receiving this as the grant lead."
+    : "You are responsible for it.";
+  const action = overdue
+    ? "Submit it as soon as you can and record the submission in Grantwell; if the funder agreed an extension, move the due date."
+    : "Record the submission in Grantwell when it is sent, and the reminders stop.";
+
+  const text = [
+    `"${deadline}" (${kind}) on the grant "${grantTitle}" from ${funder} ${when}.`,
+    who,
+    action,
+  ].join("\n\n");
+
+  const html = htmlShell(
+    escapeHtml(overdue ? `${deadline} is overdue` : `${deadline} is due`),
+    [
+      `<p style="margin:0 0 16px;font-size:14px;"><strong>${escapeHtml(deadline)}</strong> (${escapeHtml(kind)}) on the grant <strong>${escapeHtml(grantTitle)}</strong> from ${escapeHtml(funder)} ${escapeHtml(when)}.</p>`,
+      `<p style="margin:0 0 16px;font-size:14px;">${escapeHtml(who)}</p>`,
+      `<p style="margin:0;font-size:14px;${overdue ? "color:#a4541a;font-weight:600;" : ""}">${escapeHtml(action)}</p>`,
+    ].join(""),
+    escapeHtml(brand ? `Sent by ${brand}` : "Sent by Grantwell"),
+  );
+
+  return { subject, html, text };
+};
+
 const TEMPLATES: Record<string, TemplateRenderer> = {
   "grant.deadline.assigned": renderGrantDeadlineAssigned,
+  "grant.deadline.reminder": renderGrantDeadlineReminder,
   "auth.magic_link": renderMagicLink,
   "invitation.created": renderInvitationCreated,
   "invitation.accepted": renderInvitationAccepted,

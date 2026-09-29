@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { HandCoins } from "lucide-react";
+import { CalendarDays, HandCoins } from "lucide-react";
 import { OrgScope } from "@/components/shell/org-scope";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,7 +16,7 @@ import { useApiQuery, qk } from "@/lib/query";
 import { useToast } from "@/components/ui/toast";
 import { DueBadge } from "@/components/grants/due-badge";
 import { wrap } from "@/lib/api";
-import type { CreateGrantRequest, PublicGrant, PublicGrantDeadlineWithGrant } from "@saas/contracts/grant";
+import type { CreateGrantRequest, GrantStats, PublicGrant, PublicGrantDeadlineWithGrant } from "@saas/contracts/grant";
 import { GRANT_DEADLINE_KIND_LABELS, formatGrantAmount } from "@saas/contracts/grant";
 
 const STATUS_VARIANT: Record<string, "default" | "secondary" | "destructive"> = {
@@ -37,6 +37,7 @@ function Inner({ orgId, orgSlug }: { orgId: string; orgSlug: string }) {
   const deadlines = useApiQuery(qk.grantDeadlines(orgId), () =>
     wrap(async () => (await client.grants.listDeadlines(orgId, { status: "open" })).deadlines),
   );
+  const stats = useApiQuery(qk.grantStats(orgId), () => wrap(async () => (await client.grants.stats(orgId)).stats));
   const [creating, setCreating] = React.useState(false);
 
   return (
@@ -48,8 +49,18 @@ function Inner({ orgId, orgSlug }: { orgId: string; orgSlug: string }) {
             Every grant, its award letter, and every report and deliverable it obliges — with the person responsible.
           </p>
         </div>
-        {!creating && <Button onClick={() => setCreating(true)}>New grant</Button>}
+        <div className="flex gap-2">
+          <Button variant="outline" asChild>
+            <Link href={`/orgs/${orgSlug}/grants/calendar`}>
+              <CalendarDays className="h-4 w-4" />
+              Calendar
+            </Link>
+          </Button>
+          {!creating && <Button onClick={() => setCreating(true)}>New grant</Button>}
+        </div>
       </header>
+
+      <StatsRow stats={stats.data ?? null} loading={stats.loading} />
 
       {creating && (
         <GrantForm
@@ -99,6 +110,36 @@ function Inner({ orgId, orgSlug }: { orgId: string; orgSlug: string }) {
           )}
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+/** The on-time report rate and what needs attention now (GW2). */
+function StatsRow({ stats, loading }: { stats: GrantStats | null; loading: boolean }) {
+  if (loading) return <Skeleton className="h-20 w-full" />;
+  if (!stats) return null;
+  const rate = stats.onTimeRate === null ? "—" : `${Math.round(stats.onTimeRate * 100)}%`;
+  const tiles: { label: string; value: string; hint: string; alert?: boolean }[] = [
+    {
+      label: "On-time rate",
+      value: rate,
+      hint: stats.submitted === 0 ? "Nothing submitted yet" : `${stats.submittedOnTime} of ${stats.submitted} submitted on time`,
+    },
+    { label: "Overdue", value: String(stats.overdue), hint: "Open and past due", alert: stats.overdue > 0 },
+    { label: "Due in 30 days", value: String(stats.dueNext30), hint: "Open, due soon" },
+    { label: "Open", value: String(stats.open), hint: "Every open obligation" },
+  ];
+  return (
+    <div className="grid gap-3 sm:grid-cols-4">
+      {tiles.map((t) => (
+        <Card key={t.label}>
+          <CardContent className="p-4">
+            <div className="text-xs text-muted-foreground">{t.label}</div>
+            <div className={`text-2xl font-semibold tabular-nums ${t.alert ? "text-destructive" : ""}`}>{t.value}</div>
+            <div className="text-xs text-muted-foreground">{t.hint}</div>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }

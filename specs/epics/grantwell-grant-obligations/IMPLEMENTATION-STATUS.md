@@ -6,8 +6,8 @@ the code departed from `design.md`.
 | Milestone | State | PR |
 |---|---|---|
 | GW0 — the spec | ✅ landed | #9 |
-| GW1 — grants, deadlines and award letters | in review | GW-2 |
-| GW2 — the obligations calendar and escalating reminders | | |
+| GW1 — grants, deadlines and award letters | ✅ shipped — merged f889c37, deploy run 35881994323 green (67/67); stage smoke passed | #10 (GW-2) |
+| GW2 — the obligations calendar and escalating reminders | in review | GW-3 |
 | GW3 — the grant writer's portfolio | | |
 
 ## Departures from the design
@@ -41,3 +41,30 @@ the code departed from `design.md`.
 - Every repository write whose outcome is read uses `RETURNING` (the D1
   executor's `rowCount` is 0 for a bare write — runbook trap 22), pinned by
   `tests/grant-worker/src/d1-rowcount.test.ts` over the real executor.
+
+### GW2 — as built vs. design
+
+- **The ladder is "the last rung reached", not "exactly on the day".** A
+  deadline sits on the last of 30/14/7/1/0 (and late 1/7) whose threshold it
+  has reached (`grantReminderRung` in `packages/contracts/src/grant.ts`), so a
+  deadline created 20 days out is chased at once on the 30-day rung and a
+  missed tick never skips a rung. Each rung is still claimed once per
+  (deadline, rung, due date) — `INSERT … ON CONFLICT DO NOTHING RETURNING id`,
+  counted by returned rows (trap 22).
+- **The sweep window is due dates from 30 days past to 30 days ahead**, on open
+  deadlines of `active` grants only. A deadline more than 30 days late is no
+  longer chased; a closed or declined grant's deadlines are not chased.
+- **Escalation goes to the grant's `lead_email` only.** Design §2.4 and the
+  plan also named the org owners as a fallback when no lead is set; membership
+  holds no email addresses (identity does), so that needs a second service
+  hop and is deferred. With no assignee, the lead receives every rung; with
+  neither, the rung is left unclaimed (and goes out once someone is assigned).
+- **An on-demand run: `POST /v1/organizations/{org}/reminders/run`**
+  (`grant.write`) runs the same sweep for one org and returns what it claimed.
+  It is how the stage smoke proves claim-once without waiting for 13:00 UTC,
+  and it is repeat-safe by construction. Not in design §2.4.
+- The cron is declared at the top level of `wrangler.template.jsonc`
+  (inherited by stage and prod), the same way the baseline's metering-worker
+  declares its own.
+- `grant_reminders` carries an `escalated` flag beyond design §1.4, so the
+  audit trail and the table both say when the lead was copied.

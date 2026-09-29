@@ -191,6 +191,30 @@ describe("email templates", () => {
     expect(rendered!.text).toContain("member role");
   });
 
+  test("renders grant.deadline.reminder for the assignee, the escalated lead, and overdue", () => {
+    const base = {
+      grantTitle: "2027 After-School Literacy",
+      funderName: "Hollis Family Foundation",
+      deadlineTitle: "Interim narrative report",
+      kindLabel: "Narrative report",
+      dueOn: "2027-03-17",
+      assigneeEmail: "program@literacy.example",
+    };
+    const week = renderEmailTemplate("grant.deadline.reminder", { ...base, daysRemaining: 7, rung: "d7", role: "assignee" });
+    expect(week!.subject).toBe("Due in 7 days: Interim narrative report for Hollis Family Foundation");
+    expect(week!.text).toContain("You are responsible for it.");
+
+    const tomorrow = renderEmailTemplate("grant.deadline.reminder", { ...base, daysRemaining: 1, rung: "d1", role: "lead" });
+    expect(tomorrow!.subject).toBe("Due in 1 day: Interim narrative report for Hollis Family Foundation");
+    expect(tomorrow!.text).toContain("program@literacy.example is responsible for it. You are receiving this as the grant lead.");
+
+    const late = renderEmailTemplate("grant.deadline.reminder", { ...base, daysRemaining: -2, rung: "late1", role: "lead", assigneeEmail: "" });
+    expect(late!.subject).toBe("OVERDUE: Interim narrative report for Hollis Family Foundation (due 2027-03-17)");
+    expect(late!.text).toContain("is 2 days overdue");
+    expect(late!.text).toContain("Nobody is assigned to it.");
+    expect(late!.html).not.toContain("<script");
+  });
+
   test("returns null for unknown template keys", () => {
     expect(renderEmailTemplate("nope.unknown", {})).toBeNull();
   });
