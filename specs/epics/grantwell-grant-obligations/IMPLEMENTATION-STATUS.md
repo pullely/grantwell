@@ -6,8 +6,8 @@ the code departed from `design.md`.
 | Milestone | State | PR |
 |---|---|---|
 | GW0 — the spec | ✅ landed | #9 |
-| GW1 — grants, deadlines and award letters | in review | GW-2 |
-| GW2 — the obligations calendar and escalating reminders | | |
+| GW1 — grants, deadlines and award letters | ✅ shipped — merged f889c37, deploy run 35881994323 green (67/67); stage smoke passed | #10 (GW-2) |
+| GW2 — the obligations calendar and escalating reminders | in review | GW-3 |
 | GW3 — the grant writer's portfolio | | |
 
 ## Departures from the design

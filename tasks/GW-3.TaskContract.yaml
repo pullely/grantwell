@@ -1,0 +1,29 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: GW-3
+spec:
+  goal: Every open grant deadline is chased by a daily reminder ladder that escalates to the grant lead when it is close or late, and the console shows the month's deadlines and the on-time rate.
+  # Component refs, fully qualified (runbook trap 15). No new policy action
+  # (grant.read covers the calendar and the rate), so policy-worker is untouched.
+  affects:
+    - default/grantwell/db
+    - default/grantwell/db-tests
+    - default/grantwell/db-migrate
+    - default/grantwell/contracts
+    - default/grantwell/sdk
+    - default/grantwell/grant-worker
+    - default/grantwell/grant-worker-tests
+    - default/grantwell/api-edge
+    - default/grantwell/api-edge-tests
+    - default/grantwell/notifications-worker
+    - default/grantwell/web-console-next
+    - default/grantwell/web-console-next-tests
+  doneWhen:
+    - migration 210_grant_reminders is in the manifest, replays green on node:sqlite, and is applied on stage and prod
+    - a due rung is sent exactly once across two back-to-back sweeps (injected clock, real SQLite, and on stage)
+    - a submitted or waived deadline sends nothing further; moving due_on re-arms the ladder
+    - an overdue deadline's reminder goes to the assignee and the grant lead
+    - grant-worker's deploy registers the 0 13 * * * schedule on stage and prod
+    - the console calendar lists every deadline of the month and the grants page shows the on-time rate
+  gates: []

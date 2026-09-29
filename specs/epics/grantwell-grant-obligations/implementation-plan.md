@@ -11,15 +11,17 @@ one day; GW2 and GW3 land on the next. Each milestone's tests run green locally
 before its pull request opens, because every push to a pull request spends
 mints.
 
-## GW0 — the spec
+## GW0 — the spec ✅
 
 This doc set, merged to `main` and attached to the epic with `orun spec push`.
+
+Shipped in #9 (task GW-1).
 
 **Done when**
 - the five documents are on `main`
 - `orun spec list --epic grantwell-grant-obligations` shows them
 
-## GW1 — grants, deadlines and award letters
+## GW1 — grants, deadlines and award letters ✅
 
 The `grant` bounded context end to end. Migration `200_grant_core`
 (`grant_grants`, `grant_deadlines`, `grant_documents`) in `packages/db` with its
@@ -37,6 +39,8 @@ audited write works on D1: the tested `cirrus-d1-fix.patch` (events/audit and
 membership SQL that SQLite cannot run — without it no organization can be
 created) and a redeploy marker on every worker's `component.yaml`, because a
 shared-package change does not redeploy the workers that bundle it.
+
+Shipped in #10 (task GW-2), deploy run 35881994323.
 
 **Done when**
 - migration `200_grant_core` is applied on stage and prod
