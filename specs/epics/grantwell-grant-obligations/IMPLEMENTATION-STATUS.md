@@ -8,7 +8,7 @@ the code departed from `design.md`.
 | GW0 — the spec | ✅ landed | #9 |
 | GW1 — grants, deadlines and award letters | ✅ shipped — merged f889c37, deploy run 35881994323 green (67/67); stage smoke passed | #10 (GW-2) |
 | GW2 — the obligations calendar and escalating reminders | ✅ shipped — merged 9e9e513, deploy run 36609992970 green (27/27); cron `0 13 * * *` registered on stage and prod (read back from Cloudflare); stage smoke: a rung claimed once across two runs | #11 (GW-3) |
-| GW3 — the grant writer's portfolio | ✅ shipped — merged d852e20, deploy run 36612931394 green (31/31); stage smoke: a member of three orgs sees exactly those three, the digest sends once a week | #12 (GW-4) |
+| GW3 — the grant writer's portfolio | ✅ shipped — merged d852e20, deploy run 36612931394 green (31/31); stage smoke: a member of three orgs sees exactly those three, the digest sends once a week. The Monday cron's fan-out found no writers on D1 until task GW-6 (see the fix below) | #12 (GW-4), GW-6 |
 
 ## Deploy state (2026-09-29)
 
@@ -128,3 +128,21 @@ The `0 13 * * *` schedule reads back on `grantwell-grant-worker-stage` and
   notification needs an org; the digest spans several).
 - The console portfolio is at `/portfolio`, linked from every org's grants page
   ("All my organizations") rather than from the sidebar.
+
+## Fixes after ship
+
+1. **The Monday digest's fan-out found nobody (task GW-6).**
+   `multi-org-subjects` joined `identity_users u ON u.id = m.subject_id`, but on
+   D1 the membership tables store the subject as the PUBLIC id (`usr_<32 hex>`)
+   while `identity_users.id` is the UUID, so the join matched nothing and the
+   cron's `runDigest` saw zero writers. The stage smoke only exercised the
+   on-demand `POST /v1/me/grant-portfolio/digest` for the signed-in user (its
+   address comes from the session, not this join), so the cron path was never
+   tested. The join now matches `u.id` against the subject id AND its UUID form
+   (the leakbook LB-6 fix, copied as is), so a UUID-shaped subject still
+   resolves. `tests/membership-worker/src/grant-portfolio-facts.test.ts` now
+   seeds membership with the `usr_` public id, as D1 holds it, and checks both
+   forms; the fan-out tests fail on the old join. The first version seeded UUIDs
+   on both sides, which is how the bug hid. `subject-organizations` compares
+   `m.subject_id` to the caller's own (public) id with no identity join, and is
+   unchanged.
