@@ -17,6 +17,7 @@ spec:
     - default/grantwell/api-edge
     - default/grantwell/api-edge-tests
     - default/grantwell/notifications-worker
+    - default/grantwell/notifications-worker-tests
     - default/grantwell/web-console-next
     - default/grantwell/web-console-next-tests
   doneWhen:
