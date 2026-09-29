@@ -42,20 +42,33 @@ const WRITER = "44444444-4444-4444-8444-444444444444";
 const STAFF = "55555555-5555-4555-8555-555555555555";
 const GONE = "66666666-6666-4666-8666-666666666666";
 
-function seed(db: DatabaseSync): void {
+type SubjectForm = "public" | "uuid";
+
+/** A user's subject id as membership stores it: on D1 the PUBLIC id ("usr_<32 hex>"). */
+function subjectOf(id: string, form: SubjectForm = "public"): string {
+  return form === "public" ? `usr_${id.replace(/-/g, "")}` : id;
+}
+
+/**
+ * Membership rows as they are on D1: the subject is the PUBLIC id
+ * ("usr_<32 hex>"), while identity_users.id is the UUID. (The first version
+ * of this seed used UUIDs on both sides and hid a join that matched nothing
+ * on stage, so the Monday digest found no writers.)
+ */
+function seed(db: DatabaseSync, form: SubjectForm = "public"): void {
   const org = db.prepare("INSERT INTO membership_organizations (id, name, slug, slug_lower, status) VALUES (?, ?, ?, ?, ?)");
   org.run("o1", "Beacon Arts", "beacon", "beacon", "active");
   org.run("o2", "Ada Literacy", "ada", "ada", "active");
   org.run("o3", "Cedar Food Bank", "cedar", "cedar", "active");
   org.run("o4", "Dormant Trust", "dormant", "dormant", "suspended");
   const member = db.prepare("INSERT INTO membership_organization_members (id, org_id, subject_id, subject_type, status) VALUES (?, ?, ?, 'user', ?)");
-  member.run("m1", "o1", WRITER, "active");
-  member.run("m2", "o2", WRITER, "active");
-  member.run("m3", "o3", WRITER, "removed");
-  member.run("m4", "o4", WRITER, "active");
-  member.run("m5", "o1", STAFF, "active");
-  member.run("m6", "o1", GONE, "active");
-  member.run("m7", "o2", GONE, "active");
+  member.run("m1", "o1", subjectOf(WRITER, form), "active");
+  member.run("m2", "o2", subjectOf(WRITER, form), "active");
+  member.run("m3", "o3", subjectOf(WRITER, form), "removed");
+  member.run("m4", "o4", subjectOf(WRITER, form), "active");
+  member.run("m5", "o1", subjectOf(STAFF, form), "active");
+  member.run("m6", "o1", subjectOf(GONE, form), "active");
+  member.run("m7", "o2", subjectOf(GONE, form), "active");
   const user = db.prepare("INSERT INTO identity_users (id, email, email_lower, status) VALUES (?, ?, ?, ?)");
   user.run(WRITER, "Writer@Freelance.example", "writer@freelance.example", "active");
   user.run(STAFF, "staff@beacon.example", "staff@beacon.example", "active");
@@ -77,7 +90,7 @@ describe("GW3 membership directory routes", () => {
   it("lists a subject's active organizations it actively belongs to, by name", async () => {
     const db = migrated();
     seed(db);
-    const res = await post(env(db), "/v1/internal/membership/subject-organizations", { subject: { type: "user", id: WRITER } });
+    const res = await post(env(db), "/v1/internal/membership/subject-organizations", { subject: { type: "user", id: subjectOf(WRITER) } });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { data: { organizations: { orgId: string; name: string; slug: string }[] } };
     expect(body.data.organizations).toEqual([
@@ -99,15 +112,28 @@ describe("GW3 membership directory routes", () => {
     const body = (await res.json()) as { data: { subjects: { subjectId: string; email: string; organizations: { orgId: string }[] }[] } };
     // WRITER: o1 + o2 (o3 removed, o4 suspended). STAFF: one org. GONE: deleted user.
     expect(body.data.subjects).toHaveLength(1);
-    expect(body.data.subjects[0]!.subjectId).toBe(WRITER);
+    expect(body.data.subjects[0]!.subjectId).toBe(subjectOf(WRITER));
     expect(body.data.subjects[0]!.email).toBe("Writer@Freelance.example");
     expect(body.data.subjects[0]!.organizations.map((o) => o.orgId)).toEqual(["o2", "o1"]);
 
     const one = (await (await post(env(db), "/v1/internal/membership/multi-org-subjects", { minOrganizations: 1 })).json()) as {
       data: { subjects: { subjectId: string }[] };
     };
-    expect(one.data.subjects.map((s) => s.subjectId).sort()).toEqual([WRITER, STAFF].sort());
+    expect(one.data.subjects.map((s) => s.subjectId).sort()).toEqual([subjectOf(WRITER), subjectOf(STAFF)].sort());
     expect((await post(env(db), "/v1/internal/membership/multi-org-subjects", { minOrganizations: 0 })).status).toBe(422);
+  });
+
+  it("finds the digest's writers whether membership stores the usr_ public id or the UUID", async () => {
+    for (const form of ["public", "uuid"] as const) {
+      const db = migrated();
+      seed(db, form);
+      const res = await post(env(db), "/v1/internal/membership/multi-org-subjects", {});
+      expect(res.status).toBe(200);
+      const body = (await res.json()) as { data: { subjects: { subjectId: string; email: string }[] } };
+      expect(body.data.subjects.map((s) => [s.subjectId, s.email])).toEqual([
+        [subjectOf(WRITER, form), "Writer@Freelance.example"],
+      ]);
+    }
   });
 
   it("answers only POST", async () => {

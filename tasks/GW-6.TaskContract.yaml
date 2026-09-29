@@ -1,0 +1,13 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: GW-6
+spec:
+  goal: The Monday digest's multi-org writers fan-out finds its writers on D1, where membership rows carry the public usr_ subject id rather than the identity UUID.
+  affects:
+    - default/grantwell/membership-worker
+    - default/grantwell/membership-worker-tests
+  doneWhen:
+    - multi-org-subjects resolves a writer stored as usr_<hex> and one stored as a UUID, pinned by a real-SQLite test that fails on the old join
+    - on stage a user who is a member of two orgs is returned by the fan-out query, with their address
+  gates: []

@@ -115,7 +115,16 @@ export async function handleMultiOrgSubjects(request: Request, env: Env, request
        SELECT m.subject_id, m.subject_type, u.email, o.id AS org_id, o.name, o.slug
          FROM membership_organization_members m
          JOIN writers w ON w.subject_id = m.subject_id
-         JOIN identity_users u ON u.id = m.subject_id AND u.status = 'active'
+         -- Membership stores the PUBLIC subject id ("usr_<32 hex>") on D1,
+         -- identity_users the UUID: match either form (an index lookup on u.id).
+         JOIN identity_users u
+           ON u.id IN (
+                m.subject_id,
+                lower(substr(m.subject_id, 5, 8) || '-' || substr(m.subject_id, 13, 4) || '-' ||
+                      substr(m.subject_id, 17, 4) || '-' || substr(m.subject_id, 21, 4) || '-' ||
+                      substr(m.subject_id, 25, 12))
+              )
+          AND u.status = 'active'
          JOIN membership_organizations o ON o.id = m.org_id
         WHERE m.status = 'active' AND o.status = 'active'
         ORDER BY m.subject_id ASC, o.name ASC, o.id ASC`,
