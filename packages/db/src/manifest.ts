@@ -201,5 +201,14 @@ export const manifest: MigrationManifest = {
       description:
         "The reminder ladder (GW2) — one row per rung claimed for a deadline (30/14/7/1/0 days before, 1 and 7 after), unique on deadline + rung + due date so a rung is sent once across any number of sweeps and moving the due date re-arms the ladder",
     },
+    {
+      id: "220_grant_digests",
+      context: "grant",
+      path: "220_grant_digests/up.sql",
+      checksum:
+        "d38798cb5c813813bc1a7ca20b0cc9a9fbd3993ba547fa710764d7c286458631",
+      description:
+        "The grant writer's weekly digest (GW3) — one row per writer per week sent, unique on subject + Monday date so a writer gets one digest a week however many sweeps run; keyed by subject because a digest spans the writer's organizations",
+    },
   ],
 };

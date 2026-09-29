@@ -1,5 +1,6 @@
 import type { SqlExecutor, SqlRow } from "../d1/executor.js";
 import type {
+  ClaimDigestInput,
   ClaimReminderInput,
   CreateGrantDeadlineInput,
   CreateGrantDocumentInput,
@@ -393,6 +394,42 @@ export function createGrantRepository(executor: SqlExecutor): GrantRepository {
         }
       }
       return out;
+    },
+
+    async listOpenDeadlinesForOrgs(orgIds, limit) {
+      const ids = [...new Set(orgIds)];
+      const out: GrantDeadlineWithGrant[] = [];
+      for (let i = 0; i < ids.length; i += IN_CHUNK) {
+        const chunk = ids.slice(i, i + IN_CHUNK);
+        const placeholders = chunk.map((_, j) => `$${j + 2}`).join(", ");
+        const result = await executor.execute<Row>(
+          `SELECT d.id, d.org_id, d.grant_id, d.kind, d.title, d.due_on, d.assignee_email, d.status,
+                  d.submitted_at, d.notes, d.created_by, d.created_at, d.updated_at,
+                  g.title AS grant_title, g.funder_name AS grant_funder_name
+             FROM grant_deadlines d
+             JOIN grant_grants g ON g.id = d.grant_id AND g.org_id = d.org_id
+            WHERE d.status = 'open' AND d.org_id IN (${placeholders})
+            ORDER BY d.due_on ASC, d.id ASC
+            LIMIT $1`,
+          [limit, ...chunk],
+        );
+        for (const row of result.rows) {
+          out.push({ ...mapDeadline(row), grantTitle: row.grant_title as string, funderName: row.grant_funder_name as string });
+        }
+      }
+      out.sort((a, b) => (a.dueOn === b.dueOn ? (a.id < b.id ? -1 : 1) : a.dueOn < b.dueOn ? -1 : 1));
+      return out.slice(0, limit);
+    },
+
+    async claimDigest(input: ClaimDigestInput) {
+      const result = await executor.execute<Row>(
+        `INSERT INTO grant_digests (id, subject_id, week_of, address, org_count, sent_at)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         ON CONFLICT (subject_id, week_of) DO NOTHING
+         RETURNING id`,
+        [input.id, input.subjectId, input.weekOf, input.address, input.orgCount, input.sentAt],
+      );
+      return result.rows.length === 1;
     },
 
     async createDocument(input: CreateGrantDocumentInput) {

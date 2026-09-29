@@ -1,0 +1,32 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: GW-4
+spec:
+  goal: A grant writer who serves several nonprofits sees every one of their organizations' open deadlines, overdue counts and on-time rates on one page, and gets one digest email a week.
+  # Component refs, fully qualified (runbook trap 15). membership-worker gains
+  # two service-binding-only internal routes (a user's organizations; every
+  # member of two or more, with the address the digest goes to).
+  affects:
+    - default/grantwell/db
+    - default/grantwell/db-tests
+    - default/grantwell/db-migrate
+    - default/grantwell/contracts
+    - default/grantwell/sdk
+    - default/grantwell/grant-worker
+    - default/grantwell/grant-worker-tests
+    - default/grantwell/membership-worker
+    - default/grantwell/membership-worker-tests
+    - default/grantwell/api-edge
+    - default/grantwell/api-edge-tests
+    - default/grantwell/notifications-worker
+    - default/grantwell/notifications-worker-tests
+    - default/grantwell/web-console-next
+    - default/grantwell/web-console-next-tests
+  doneWhen:
+    - migration 220_grant_digests is in the manifest, replays green on node:sqlite, and is applied on stage and prod
+    - GET /v1/me/grant-portfolio for a member of three orgs returns exactly those three, and no fourth org's deadlines (tests and stage)
+    - api-edge routes /v1/me/grant-portfolio to grant-worker; unauthenticated it answers 401 on stage and prod
+    - the weekly digest is sent once per writer per week, claimed like a reminder rung (tests and stage)
+    - the console portfolio page links each organization to its grants page
+  gates: []

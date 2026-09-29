@@ -162,6 +162,16 @@ export interface GrantDeadlineCounts {
   submittedOnTime: number;
 }
 
+export interface ClaimDigestInput {
+  id: string;
+  subjectId: string;
+  /** The Monday (UTC) of the week, YYYY-MM-DD. */
+  weekOf: string;
+  address: string;
+  orgCount: number;
+  sentAt: string;
+}
+
 export interface GrantRepository {
   createGrant(input: CreateGrantInput): Promise<Grant>;
   getGrant(orgId: string, grantId: string): Promise<Grant | null>;
@@ -194,6 +204,11 @@ export interface GrantRepository {
   listReminders(orgId: string, deadlineId: string): Promise<GrantReminder[]>;
   /** Counts per org for each of these orgs (absent orgs have no deadlines). `today` is YYYY-MM-DD. */
   deadlineCounts(orgIds: readonly string[], today: string): Promise<Map<string, GrantDeadlineCounts>>;
+
+  /** Open deadlines across these orgs (never any other), due_on ascending, with their grant. */
+  listOpenDeadlinesForOrgs(orgIds: readonly string[], limit: number): Promise<GrantDeadlineWithGrant[]>;
+  /** Claim a writer's digest for a week: true exactly once per (subject, week) — RETURNING, trap 22. */
+  claimDigest(input: ClaimDigestInput): Promise<boolean>;
 
   createDocument(input: CreateGrantDocumentInput): Promise<GrantDocument>;
   listDocuments(orgId: string, grantId: string): Promise<GrantDocument[]>;

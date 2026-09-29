@@ -1,4 +1,5 @@
 export type {
+  ClaimDigestInput,
   ClaimReminderInput,
   CreateGrantDeadlineInput,
   CreateGrantDocumentInput,
