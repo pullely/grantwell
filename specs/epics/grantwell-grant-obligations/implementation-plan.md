@@ -68,13 +68,15 @@ Shipped in #11 (task GW-3), deploy run 36609992970.
 - the worker's deploy log lists the `0 13 * * *` schedule on stage and prod
 - the calendar renders every open deadline of the month
 
-## GW3 — the grant writer's portfolio
+## GW3 — the grant writer's portfolio ✅
 
 `GET /v1/me/grant-portfolio` in `grant-worker`, reading the caller's
 memberships from membership-worker and aggregating per org (next open
 deadline, overdue count, on-time rate); the console portfolio page; a weekly
 digest email (`grant.portfolio.digest`, Mondays) to every member who belongs to
 two or more organizations.
+
+Shipped in #12 (task GW-4), deploy run 36612931394.
 
 **Done when**
 - a user who belongs to three organizations sees exactly those three in one response, and a fourth organization's deadlines never appear
