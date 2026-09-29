@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { CalendarDays, HandCoins } from "lucide-react";
+import { Briefcase, CalendarDays, HandCoins } from "lucide-react";
 import { OrgScope } from "@/components/shell/org-scope";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,6 +50,12 @@ function Inner({ orgId, orgSlug }: { orgId: string; orgSlug: string }) {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button variant="ghost" asChild>
+            <Link href="/portfolio">
+              <Briefcase className="h-4 w-4" />
+              All my organizations
+            </Link>
+          </Button>
           <Button variant="outline" asChild>
             <Link href={`/orgs/${orgSlug}/grants/calendar`}>
               <CalendarDays className="h-4 w-4" />
