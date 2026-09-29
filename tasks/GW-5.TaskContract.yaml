@@ -1,0 +1,11 @@
+apiVersion: orun.io/v1
+kind: TaskContract
+metadata:
+  name: GW-5
+spec:
+  goal: The epic's README reads Shipped once GW3's deploy run on main is fully green, with Shipped as filled in and every milestone's evidence in the as-built record.
+  affects: []
+  doneWhen:
+    - README status reads Shipped and Shipped as names every milestone's PR and deploy run
+    - IMPLEMENTATION-STATUS shows GW3 shipped with its deploy run and the stage and prod checks
+  gates: []

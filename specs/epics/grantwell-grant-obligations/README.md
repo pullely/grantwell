@@ -26,14 +26,14 @@ organization's next deadline on one page.
 
 | Field | Value |
 |-------|-------|
-| Status | In progress — GW0 landed (#9); GW1 ✅ (#10); GW2 ✅ (#11); GW3 in review |
+| Status | ✅ Shipped — GW0–GW3 merged and deployed on stage and prod (2026-09-29) |
 | Cluster | **GW** (GW0–GW3) |
 | Owner(s) | `apps/grant-worker` (grants, deadlines, award letters, the reminder cron, the portfolio) · `apps/api-edge` (the facade) · `packages/db` (migrations `200`–`220`) · `packages/contracts` + `packages/sdk` (the wire) · `infra/terraform/cloudflare-r2` (the award-letter bucket) · `apps/notifications-worker` (the templates) · `apps/web-console-next` (the surface) |
 | Builds on | `cirrus baseline-v12` — organizations as nonprofits, members as staff and grant writers, the policy engine for who may edit, `notifications-worker` for email, the audit trail in `events-worker`, api-edge rate limiting |
 | Changes | Adds one bounded context (`grant`), one worker, one R2 bucket per environment and one cron trigger; turns the Solo profile off (several staff per nonprofit, several nonprofits per writer); every baseline context is reused, none is modified beyond new actions, templates and subject prefixes |
 | Decisions locked | (1) A nonprofit is a cirrus organization; its staff and its freelance grant writer are members — the writer's multi-org view is the baseline's multi-membership, not a second tenancy axis. (2) Every obligation is a dated `grant_deadlines` row with an assignee email and a state; "on time" is `submitted_at <= due_on`, computed, never typed. (3) The award letter is stored immutably in R2 and is the source document; nothing is extracted from it automatically until a model credential exists (GW-B). (4) Reminders are derived from deadline rows by a daily cron, each rung claimed with `INSERT … RETURNING` before it is sent, so a rung is sent once even across overlapping ticks. (5) Money is integer cents with an ISO currency; no floating point anywhere. |
 | Gate | GW1 is the first user-visible change (grants, deadlines, award letters). GW2 is what makes a missed report hard to miss. GW3 is the grant writer's plan. |
-| Shipped as | |
+| Shipped as | GW0 #9 (1a01ed9); GW1 #10 (f889c37, deploy run 35881994323, 67/67); GW2 #11 (9e9e513, run 36609992970, 27/27); GW3 #12 (d852e20, run 36612931394, 31/31). Live: `https://grantwell-api-edge-{stage,prod}.nexo-7be.workers.dev`; console `https://grantwell-web-console-next-{stage,prod}.nexo-7be.workers.dev`; daily `0 13 * * *` cron on `grantwell-grant-worker-{stage,prod}`. Prod sign-in waits on a verified sending domain (runbook trap 27). |
 
 ## Read order
 

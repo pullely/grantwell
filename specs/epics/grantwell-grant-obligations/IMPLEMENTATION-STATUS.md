@@ -8,7 +8,30 @@ the code departed from `design.md`.
 | GW0 — the spec | ✅ landed | #9 |
 | GW1 — grants, deadlines and award letters | ✅ shipped — merged f889c37, deploy run 35881994323 green (67/67); stage smoke passed | #10 (GW-2) |
 | GW2 — the obligations calendar and escalating reminders | ✅ shipped — merged 9e9e513, deploy run 36609992970 green (27/27); cron `0 13 * * *` registered on stage and prod (read back from Cloudflare); stage smoke: a rung claimed once across two runs | #11 (GW-3) |
-| GW3 — the grant writer's portfolio | in review | GW-4 |
+| GW3 — the grant writer's portfolio | ✅ shipped — merged d852e20, deploy run 36612931394 green (31/31); stage smoke: a member of three orgs sees exactly those three, the digest sends once a week | #12 (GW-4) |
+
+## Deploy state (2026-09-29)
+
+Every milestone's push-to-`main` deploy run is fully green, judged lane by lane:
+35881994323 (GW1, 67/67), 36609992970 (GW2, 27/27), 36612931394 (GW3, 31/31).
+
+Checked on **stage** by scripted smoke (sign-in through `DEBUG_DELIVERY`):
+organization create 201; grants, deadlines, award letter SHA-256 round-trip
+(GW1); reminders run twice the same day → the 7-day, 1-day and overdue rungs
+claimed once, the 1-day and overdue ones copied to the grant lead, the second
+run claimed nothing, exactly three `grant.reminder.sent` in the audit trail,
+and notifications-worker accepted both emails of an escalated rung (GW2); a
+writer invited into three of four organizations sees exactly those three and
+six open deadlines, none from the fourth, and this week's digest sends once
+then answers `already_sent` (GW3). The console's `/orgs/*/grants`,
+`/orgs/*/grants/calendar` and `/portfolio` serve 200.
+
+Checked on **prod**: `/health` 200; every new route answers 401
+unauthenticated through api-edge (so the routes are live); `DEBUG_DELIVERY` is
+`false` on identity-worker and membership-worker (read back from Cloudflare).
+The `0 13 * * *` schedule reads back on `grantwell-grant-worker-stage` and
+`-prod`. Nobody can sign in to prod until a sending domain is verified
+(runbook trap 27).
 
 ## Departures from the design
 
