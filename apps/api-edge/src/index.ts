@@ -6,7 +6,7 @@ import { handlePreflight, applyCorsHeaders } from "./cors";
 import { isAuthRoute, handleAuthRoute } from "./auth-facade";
 import { isOrgRoute, handleOrgRoute } from "./org-facade";
 import { isProjectRoute, handleProjectRoute } from "./project-facade";
-import { isGrantRoute, handleGrantRoute } from "./grant-facade";
+import { isGrantRoute, isGrantPortfolioRoute, handleGrantRoute } from "./grant-facade";
 import { isAuditRoute, handleAuditRoute } from "./audit-facade";
 import { isConfigRoute, handleConfigRoute } from "./config-facade";
 import { isWebhooksRoute, handleWebhooksRoute } from "./webhooks-facade";
@@ -45,6 +45,9 @@ export default {
       // reads as "not found" to the single-user surface. Flip SOLO_MODE off and
       // this branch is dead, restoring the full baseline. (See ./solo-mode.ts.)
       response = notFound(requestId, url.pathname);
+    } else if (isGrantPortfolioRoute(url.pathname)) {
+      // GW3: /v1/me/grant-portfolio → grant-worker, ahead of any /v1/me facade.
+      response = await handleGrantRoute(request, env, requestId, url.pathname);
     } else if (isAuthRoute(url.pathname)) {
       response = await handleAuthRoute(request, env, requestId, url.pathname);
     } else if (isAuditRoute(url.pathname)) {

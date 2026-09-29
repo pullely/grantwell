@@ -259,9 +259,50 @@ const renderGrantDeadlineReminder: TemplateRenderer = (data, opts) => {
   return { subject, html, text };
 };
 
+/**
+ * Grantwell: the grant writer's Monday digest (GW3) — every open deadline due
+ * within 30 days across the organizations they serve, overdue first. `lines`
+ * arrives pre-rendered, one deadline per line (template data is flat).
+ */
+const renderGrantPortfolioDigest: TemplateRenderer = (data, opts) => {
+  const weekOf = str(data, "weekOf");
+  const orgCount = Number(data.orgCount ?? 0);
+  const open = Number(data.open ?? 0);
+  const overdue = Number(data.overdue ?? 0);
+  const more = Number(data.more ?? 0);
+  const lines = str(data, "lines")
+    .split("\n")
+    .filter((l) => l.length > 0);
+  const brand = opts.brandName ?? "";
+  const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+  const subject =
+    overdue > 0
+      ? `Your grants this week: ${overdue} overdue, ${open} open across ${plural(orgCount, "organization")}`
+      : `Your grants this week: ${open} open across ${plural(orgCount, "organization")}`;
+  const summary = `Week of ${weekOf}: ${plural(open, "open deadline")} across ${plural(orgCount, "organization")}${overdue > 0 ? `, ${overdue} overdue` : ""}.`;
+  const tail = more > 0 ? `…and ${more} more in Grantwell.` : "";
+
+  const text = [summary, lines.length > 0 ? lines.map((l) => `- ${l}`).join("\n") : "Nothing is due in the next 30 days.", tail]
+    .filter((l) => l.length > 0)
+    .join("\n\n");
+  const html = htmlShell(
+    escapeHtml("Your grants this week"),
+    [
+      `<p style="margin:0 0 16px;font-size:14px;">${escapeHtml(summary)}</p>`,
+      lines.length > 0
+        ? `<ul style="margin:0 0 16px;padding-left:18px;font-size:13px;">${lines.map((l) => `<li style="margin:0 0 6px;${l.includes("OVERDUE") ? "color:#a4541a;font-weight:600;" : ""}">${escapeHtml(l)}</li>`).join("")}</ul>`
+        : `<p style="margin:0 0 16px;font-size:14px;">Nothing is due in the next 30 days.</p>`,
+      tail ? `<p style="margin:0;font-size:13px;color:#6b6b80;">${escapeHtml(tail)}</p>` : "",
+    ].join(""),
+    escapeHtml(brand ? `Sent by ${brand} every Monday to members of two or more organizations` : "Sent by Grantwell every Monday to members of two or more organizations"),
+  );
+  return { subject, html, text };
+};
+
 const TEMPLATES: Record<string, TemplateRenderer> = {
   "grant.deadline.assigned": renderGrantDeadlineAssigned,
   "grant.deadline.reminder": renderGrantDeadlineReminder,
+  "grant.portfolio.digest": renderGrantPortfolioDigest,
   "auth.magic_link": renderMagicLink,
   "invitation.created": renderInvitationCreated,
   "invitation.accepted": renderInvitationAccepted,

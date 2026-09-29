@@ -215,6 +215,23 @@ describe("email templates", () => {
     expect(late!.html).not.toContain("<script");
   });
 
+  test("renders grant.portfolio.digest with one line per deadline, overdue first", () => {
+    const rendered = renderEmailTemplate("grant.portfolio.digest", {
+      weekOf: "2027-03-08",
+      orgCount: 3,
+      open: 6,
+      overdue: 1,
+      dueNext30: 4,
+      lines: "Nonprofit 1 — Late (Deliverable, Grant 1): OVERDUE 2d\nNonprofit 2 — Report (Narrative report, Grant 2): due 2027-03-15",
+      more: 2,
+    });
+    expect(rendered!.subject).toBe("Your grants this week: 1 overdue, 6 open across 3 organizations");
+    expect(rendered!.text).toContain("Week of 2027-03-08: 6 open deadlines across 3 organizations, 1 overdue.");
+    expect(rendered!.text).toContain("- Nonprofit 1 — Late (Deliverable, Grant 1): OVERDUE 2d");
+    expect(rendered!.text).toContain("…and 2 more in Grantwell.");
+    expect((rendered!.html.match(/<li /g) ?? []).length).toBe(2);
+  });
+
   test("returns null for unknown template keys", () => {
     expect(renderEmailTemplate("nope.unknown", {})).toBeNull();
   });

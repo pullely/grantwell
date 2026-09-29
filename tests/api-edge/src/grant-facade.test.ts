@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { isGrantRoute, handleGrantRoute } from "@api-edge/grant-facade";
+import { isGrantRoute, isGrantPortfolioRoute, handleGrantRoute } from "@api-edge/grant-facade";
 import { isOrgRoute } from "@api-edge/org-facade";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -57,6 +57,9 @@ describe("api-edge grant facade", () => {
       "/v1/organizations/org_a/deadlines/calendar",
       "/v1/organizations/org_a/grants/stats",
       "/v1/organizations/org_a/reminders/run",
+      // GW3
+      "/v1/me/grant-portfolio",
+      "/v1/me/grant-portfolio/digest",
     ]) {
       expect(isGrantRoute(p)).toBe(true);
     }
@@ -68,9 +71,21 @@ describe("api-edge grant facade", () => {
       "/v1/organizations/org_a/deadlines/gdl_c",
       "/v1/organizations/org_a/reminders",
       "/v1/organizations/org_a/reminders/run/now",
+      "/v1/me",
+      "/v1/me/grant-portfolio/other",
+      "/v1/me/profile",
     ]) {
       expect(isGrantRoute(p)).toBe(false);
     }
+  });
+
+  it("dispatches the portfolio ahead of every other facade, auth included (GW3)", () => {
+    expect(isGrantPortfolioRoute("/v1/me/grant-portfolio")).toBe(true);
+    expect(isGrantPortfolioRoute("/v1/me/grant-portfolio/digest")).toBe(true);
+    expect(isGrantPortfolioRoute("/v1/organizations/org_a/grants")).toBe(false);
+    const index = readFileSync(resolve(__dirname, "../../../apps/api-edge/src/index.ts"), "utf8");
+    expect(index.indexOf("isGrantPortfolioRoute(url.pathname)")).toBeGreaterThan(-1);
+    expect(index.indexOf("isGrantPortfolioRoute(url.pathname)")).toBeLessThan(index.indexOf("isAuthRoute(url.pathname)"));
   });
 
   it("is dispatched before the org facade would swallow it", () => {

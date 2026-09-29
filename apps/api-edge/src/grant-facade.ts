@@ -17,8 +17,22 @@ const GRANT_RE =
 const FORWARDED_HEADERS = ["content-type", "content-length", "traceparent", "idempotency-key", "x-filename"];
 const BODY_METHODS = new Set(["POST", "PATCH", "PUT"]);
 
+// GW3 — the grant writer's own portfolio across every org they belong to, and
+// the self-serve weekly digest. Not org-scoped: grant-worker asks
+// membership-worker which orgs the actor is in.
+const PORTFOLIO_RE = /^\/v1\/me\/grant-portfolio(?:\/digest)?$/;
+
 export function isGrantRoute(pathname: string): boolean {
-  return GRANT_RE.test(pathname);
+  return GRANT_RE.test(pathname) || PORTFOLIO_RE.test(pathname);
+}
+
+/**
+ * The portfolio lives under `/v1/me/…`. index.ts dispatches it before every
+ * other facade (the auth facade included), so an identity `/v1/me` facade —
+ * which cirrus does not have today — can never shadow it.
+ */
+export function isGrantPortfolioRoute(pathname: string): boolean {
+  return PORTFOLIO_RE.test(pathname);
 }
 
 export async function handleGrantRoute(
