@@ -49,7 +49,7 @@ Shipped in #10 (task GW-2), deploy run 35881994323.
 - a non-member reading the grant gets 404; a viewer creating one gets 404
 - `tests/grant-worker` runs the worker over a real SQLite engine and is green in CI
 
-## GW2 — the obligations calendar and escalating reminders
+## GW2 — the obligations calendar and escalating reminders ✅
 
 Migration `210_grant_reminders`; a `scheduled()` handler on `grant-worker` with
 a daily cron (`0 13 * * *`); the ladder 30/14/7/1/0 days before and 1/7 days
@@ -58,6 +58,8 @@ owners when it is unset) from the 1-day rung and on every overdue rung; each
 rung claimed with `INSERT … ON CONFLICT DO NOTHING RETURNING id` before it is
 sent; `grant.reminder.sent` audit events; the `grant.deadline.reminder`
 template; the console month calendar and the on-time report rate.
+
+Shipped in #11 (task GW-3), deploy run 36609992970.
 
 **Done when**
 - a rung that is due sends exactly once across two cron ticks run back to back (tested with an injected clock over real SQLite)

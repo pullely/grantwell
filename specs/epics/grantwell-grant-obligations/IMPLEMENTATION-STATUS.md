@@ -7,8 +7,8 @@ the code departed from `design.md`.
 |---|---|---|
 | GW0 — the spec | ✅ landed | #9 |
 | GW1 — grants, deadlines and award letters | ✅ shipped — merged f889c37, deploy run 35881994323 green (67/67); stage smoke passed | #10 (GW-2) |
-| GW2 — the obligations calendar and escalating reminders | in review | GW-3 |
-| GW3 — the grant writer's portfolio | | |
+| GW2 — the obligations calendar and escalating reminders | ✅ shipped — merged 9e9e513, deploy run 36609992970 green (27/27); cron `0 13 * * *` registered on stage and prod (read back from Cloudflare); stage smoke: a rung claimed once across two runs | #11 (GW-3) |
+| GW3 — the grant writer's portfolio | in review | GW-4 |
 
 ## Departures from the design
 
