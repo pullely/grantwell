@@ -7,8 +7,8 @@ the code departed from `design.md`.
 |---|---|---|
 | GW0 — the spec | ✅ landed | #9 |
 | GW1 — grants, deadlines and award letters | ✅ shipped — merged f889c37, deploy run 35881994323 green (67/67); stage smoke passed | #10 (GW-2) |
-| GW2 — the obligations calendar and escalating reminders | in review | GW-3 |
-| GW3 — the grant writer's portfolio | | |
+| GW2 — the obligations calendar and escalating reminders | ✅ shipped — merged 9e9e513, deploy run 36609992970 green (27/27); cron `0 13 * * *` registered on stage and prod (read back from Cloudflare); stage smoke: a rung claimed once across two runs | #11 (GW-3) |
+| GW3 — the grant writer's portfolio | in review | GW-4 |
 
 ## Departures from the design
 
@@ -68,3 +68,40 @@ the code departed from `design.md`.
   declares its own.
 - `grant_reminders` carries an `escalated` flag beyond design §1.4, so the
   audit trail and the table both say when the lead was copied.
+
+### GW3 — as built vs. design
+
+- **The portfolio's organizations come from two new membership-worker
+  internal routes** (service-binding only, not routed by api-edge):
+  `POST /v1/internal/membership/subject-organizations` (a user's active
+  organizations, by name) and `POST /v1/internal/membership/multi-org-subjects`
+  (every active user in two or more, for the digest). grant-worker never takes
+  an org list from the caller, and every grant query is `org_id IN (…)` over
+  that list (chunked below D1's 100-bind cap), so a fourth organization's
+  deadlines cannot appear. Membership is the authorization: `grant.read` is
+  granted to every role, so no per-org policy call is made.
+- **The digest address is read by membership-worker with a join to
+  `identity_users`**, not through identity-worker. identity-worker answers on
+  its public workers.dev hostname on stage and prod (its wrangler template has
+  no `workers_dev: false`, unlike every other worker), so a lookup route there
+  would have given anyone the email behind a user id. A read-only join across
+  contexts inside a bound-only worker was the smaller exposure. The baseline's
+  public identity-worker is flagged, not changed.
+- **api-edge dispatches `/v1/me/grant-portfolio` before every other facade.**
+  cirrus has no `/v1/me` identity facade today (identity lives under
+  `/v1/auth/*`); the portfolio is matched first anyway, so a later one cannot
+  shadow it.
+- **The response carries more than design §2.5**: besides each organization's
+  next open deadline, overdue count and on-time rate, it lists every open
+  deadline across them due within 30 days (overdue first) and the totals.
+- **Digest:** migration `220_grant_digests` (UNIQUE subject + Monday date),
+  claimed with `INSERT … ON CONFLICT DO NOTHING RETURNING id` before sending.
+  It runs from the same daily 13:00 UTC `scheduled()` on Mondays (UTC) — one
+  cron, not two. A writer with nothing open gets no email and nothing is
+  claimed. `POST /v1/me/grant-portfolio/digest` sends the signed-in writer this
+  week's digest now (same claim), which is how the stage smoke proves
+  once-a-week, and the console's "Email me this week's digest" button.
+- The notification is filed under the writer's first organization (a
+  notification needs an org; the digest spans several).
+- The console portfolio is at `/portfolio`, linked from every org's grants page
+  ("All my organizations") rather than from the sidebar.

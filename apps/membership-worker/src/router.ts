@@ -13,6 +13,7 @@ import { handleAcceptInvitation } from "./handlers/accept-invitation.js";
 import { handleAuthorizationContext } from "./handlers/authorization-context.js";
 import { handleSyncAccountChildren } from "./handlers/sync-account-children.js";
 import { handleResolveBillingParent } from "./handlers/resolve-billing-parent.js";
+import { handleMultiOrgSubjects, handleSubjectOrganizations } from "./handlers/grant-portfolio-facts.js";
 import { handleCreateServicePrincipalBinding, handleListServicePrincipalBindings, handleRevokeServicePrincipalBinding } from "./handlers/service-principal-bindings.js";
 import { errorResponse, notFound, methodNotAllowed } from "./http.js";
 import { generateRequestId } from "./ids.js";
@@ -77,6 +78,21 @@ export async function route(request: Request, env: Env): Promise<Response> {
     if (url.pathname === "/v1/internal/membership/organizations/billing-parent") {
       if (request.method === "POST") {
         return handleResolveBillingParent(request, env, requestId);
+      }
+      return methodNotAllowed(requestId);
+    }
+
+    // Grantwell GW3: the grant writer's organizations (portfolio) and every
+    // member of two or more (the weekly digest). Service-binding only.
+    if (url.pathname === "/v1/internal/membership/subject-organizations") {
+      if (request.method === "POST") {
+        return handleSubjectOrganizations(request, env, requestId);
+      }
+      return methodNotAllowed(requestId);
+    }
+    if (url.pathname === "/v1/internal/membership/multi-org-subjects") {
+      if (request.method === "POST") {
+        return handleMultiOrgSubjects(request, env, requestId);
       }
       return methodNotAllowed(requestId);
     }

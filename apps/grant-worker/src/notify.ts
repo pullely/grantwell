@@ -101,3 +101,43 @@ export async function sendDeadlineReminder(
   );
   return result.ok;
 }
+
+export interface PortfolioDigest {
+  subjectId: string;
+  address: string;
+  weekOf: string;
+  /** The organization the notification is filed under (the writer's first). */
+  orgId: string;
+  orgCount: number;
+  open: number;
+  overdue: number;
+  dueNext30: number;
+  lines: string[];
+  /** Lines left out of the email. */
+  more: number;
+}
+
+/** The grant writer's weekly digest (GW3). Idempotent per writer and week. */
+export async function sendPortfolioDigest(env: Env, requestId: string, digest: PortfolioDigest): Promise<boolean> {
+  const result = await enqueueNotification(
+    env,
+    { internalActor: "grant-worker", actorSubjectType: "system", actorSubjectId: "grant-digest", requestId },
+    {
+      orgId: digest.orgId,
+      category: "product",
+      templateKey: "grant.portfolio.digest",
+      templateData: {
+        weekOf: digest.weekOf,
+        orgCount: digest.orgCount,
+        open: digest.open,
+        overdue: digest.overdue,
+        dueNext30: digest.dueNext30,
+        lines: digest.lines.join("\n"),
+        more: digest.more,
+      },
+      recipient: { channel: "email", address: digest.address.toLowerCase() },
+      idempotencyKey: buildIdempotencyKey("grant.portfolio.digest", digest.subjectId, digest.weekOf),
+    },
+  );
+  return result.ok;
+}

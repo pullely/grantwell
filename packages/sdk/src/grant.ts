@@ -6,11 +6,13 @@ import type {
   GrantDeadlineResponse,
   GrantDocumentKind,
   GrantDocumentResponse,
+  GrantPortfolioResponse,
   GrantResponse,
   GrantStatsResponse,
   ListGrantDeadlinesResponse,
   ListGrantsResponse,
   RunGrantRemindersResponse,
+  SendGrantDigestResponse,
   UpdateGrantDeadlineRequest,
   UpdateGrantRequest,
 } from "@saas/contracts/grant";
@@ -107,6 +109,16 @@ export class GrantClient {
   /** POST /v1/organizations/:orgId/reminders/run — today's reminder ladder for this org, now. Repeat-safe. */
   runReminders(orgId: string, opts: RequestOptions = {}): Promise<RunGrantRemindersResponse> {
     return this.transport.request<RunGrantRemindersResponse>({ method: "POST", path: `${org(orgId)}/reminders/run`, body: {} }, opts);
+  }
+
+  /** GET /v1/me/grant-portfolio — every organization the caller belongs to, and what is due across them. */
+  portfolio(opts: RequestOptions = {}): Promise<GrantPortfolioResponse> {
+    return this.transport.request<GrantPortfolioResponse>({ method: "GET", path: "/v1/me/grant-portfolio" }, opts);
+  }
+
+  /** POST /v1/me/grant-portfolio/digest — email the caller this week's digest now (once a week). */
+  sendMyDigest(opts: RequestOptions = {}): Promise<SendGrantDigestResponse> {
+    return this.transport.request<SendGrantDigestResponse>({ method: "POST", path: "/v1/me/grant-portfolio/digest", body: {} }, opts);
   }
 
   /**

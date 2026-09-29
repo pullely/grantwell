@@ -220,6 +220,8 @@ export interface GrantReminderClaim {
   daysRemaining: number;
   recipients: string[];
   escalated: boolean;
+  /** Recipients whose email notifications-worker accepted (GW3); the claim stands either way. */
+  notified: number;
 }
 
 export interface RunGrantRemindersResponse {
@@ -257,6 +259,46 @@ export interface GrantStatsResponse {
   /** The UTC date "overdue" was judged against. */
   today: string;
   stats: GrantStats;
+}
+
+// ── The grant writer's portfolio (GW3) ─────────────────────
+
+/** Organizations one portfolio reads (the caller's first N, by name). */
+export const GRANT_PORTFOLIO_MAX_ORGS = 100;
+
+export interface GrantPortfolioOrganization {
+  org: { id: string; name: string; slug: string };
+  stats: GrantStats;
+  /** The earliest open deadline (overdue included), or null. */
+  nextDeadline: PublicGrantDeadlineWithGrant | null;
+}
+
+/** An open deadline in the portfolio, carrying the organization it belongs to. */
+export interface PortfolioDeadline extends PublicGrantDeadlineWithGrant {
+  orgId: string;
+  orgName: string;
+  orgSlug: string;
+}
+
+export interface GrantPortfolioResponse {
+  /** The UTC date "overdue" was judged against. */
+  today: string;
+  /** Every organization the caller is an active member of, by name. */
+  organizations: GrantPortfolioOrganization[];
+  /** Open deadlines across those organizations due within 30 days, overdue first. */
+  deadlines: PortfolioDeadline[];
+  totals: GrantStats;
+  /** True when the caller belongs to more than GRANT_PORTFOLIO_MAX_ORGS organizations. */
+  truncated: boolean;
+}
+
+export interface SendGrantDigestResponse {
+  /** The Monday (UTC) of the digest's week. */
+  weekOf: string;
+  sent: boolean;
+  reason?: "already_sent" | "nothing_open" | "fewer_than_two_organizations";
+  organizations?: number;
+  lines?: number;
 }
 
 /** Format integer cents as a currency amount for display ("$12,500.00"). */

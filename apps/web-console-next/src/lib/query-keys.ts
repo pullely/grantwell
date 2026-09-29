@@ -15,6 +15,7 @@ export const qk = {
   grantDeadlines: (orgId: string) => ["grantDeadlines", orgId] as const,
   grantCalendar: (orgId: string, month: string) => ["grantCalendar", orgId, month] as const,
   grantStats: (orgId: string) => ["grantStats", orgId] as const,
+  grantPortfolio: () => ["grantPortfolio"] as const,
   environments: (orgId: string, projectId: string) =>
     ["environments", orgId, projectId] as const,
   members: (orgId: string) => ["members", orgId] as const,

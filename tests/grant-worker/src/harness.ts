@@ -82,10 +82,41 @@ const ROLE_ACTIONS: Record<string, ReadonlySet<string>> = {
   viewer: new Set(["grant.read"]),
 };
 
-export function fakeFleet(): { MEMBERSHIP_WORKER: Fetcher; POLICY_WORKER: Fetcher; NOTIFICATIONS_WORKER: Fetcher; sent: unknown[] } {
+export interface DirectoryOrg {
+  orgId: string;
+  name: string;
+  slug: string;
+}
+
+/**
+ * membership-worker's directory for the portfolio (GW3): which organizations
+ * each user is in, and the address identity holds for them. `fail` makes both
+ * internal routes answer 500.
+ */
+export class Directory extends Map<string, DirectoryOrg[]> {
+  fail = false;
+}
+
+export function fakeFleet(
+  directory: Directory = new Directory(),
+  emails: Map<string, string> = new Map(),
+): { MEMBERSHIP_WORKER: Fetcher; POLICY_WORKER: Fetcher; NOTIFICATIONS_WORKER: Fetcher; sent: unknown[] } {
   const sent: unknown[] = [];
   const membership = {
-    async fetch(_url: string, init: RequestInit) {
+    async fetch(url: string, init: RequestInit) {
+      if (url.endsWith("/subject-organizations") || url.endsWith("/multi-org-subjects")) {
+        if (directory.fail) return Response.json({ error: { code: "internal_error" } }, { status: 500 });
+        if (url.endsWith("/subject-organizations")) {
+          const { subject } = JSON.parse(String(init.body)) as { subject: { id: string } };
+          const orgs = [...(directory.get(subject.id) ?? [])].sort((a, b) => a.name.localeCompare(b.name));
+          return Response.json({ data: { organizations: orgs } });
+        }
+        const { minOrganizations } = JSON.parse(String(init.body)) as { minOrganizations: number };
+        const subjects = [...directory.entries()]
+          .filter(([id, orgs]) => orgs.length >= minOrganizations && emails.has(id))
+          .map(([id, orgs]) => ({ subjectId: id, subjectType: "user", email: emails.get(id)!, organizations: orgs }));
+        return Response.json({ data: { subjects } });
+      }
       const body = JSON.parse(String(init.body)) as { subject: { id: string } };
       const role = ROLE[body.subject.id] ?? null;
       return Response.json({ data: { memberships: role ? [{ kind: "organization", role }] : [] } });
@@ -118,12 +149,16 @@ export interface TestWorld {
   db: DatabaseSync;
   r2: FakeR2;
   sent: unknown[];
+  directory: Directory;
+  emails: Map<string, string>;
 }
 
 export function world(): TestWorld {
   const db = migratedDatabase();
   const r2 = new FakeR2();
-  const fleet = fakeFleet();
+  const directory = new Directory();
+  const emails = new Map<string, string>();
+  const fleet = fakeFleet(directory, emails);
   const env = {
     ENVIRONMENT: "test",
     PLATFORM_DB: d1Over(db),
@@ -132,7 +167,7 @@ export function world(): TestWorld {
     POLICY_WORKER: fleet.POLICY_WORKER,
     NOTIFICATIONS_WORKER: fleet.NOTIFICATIONS_WORKER,
   } as Env;
-  return { env, db, r2, sent: fleet.sent };
+  return { env, db, r2, sent: fleet.sent, directory, emails };
 }
 
 export function as(subjectId: string): Record<string, string> {

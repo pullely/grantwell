@@ -4,6 +4,7 @@ import { handleCreateGrant, handleGetGrant, handleListGrants, handleUpdateGrant 
 import { handleCreateDeadline, handleListDeadlines, handleUpdateDeadline } from "./handlers/deadlines.js";
 import { handleGetDocument, handleUploadDocument } from "./handlers/documents.js";
 import { handleDeadlineCalendar, handleGrantStats, handleRunReminders } from "./handlers/reminders.js";
+import { handleGetPortfolio, handleSendMyDigest } from "./handlers/portfolio.js";
 import { errorResponse, methodNotAllowed, notFound } from "./http.js";
 import {
   generateRequestId,
@@ -157,6 +158,14 @@ export async function route(request: Request, env: Env): Promise<Response> {
   const requestId = resolveRequestId(request);
   try {
     if (url.pathname === "/health" && request.method === "GET") return handleHealth(env, requestId);
+    // GW3 — the caller's own portfolio: not org-scoped; membership decides which orgs.
+    if (url.pathname === "/v1/me/grant-portfolio" || url.pathname === "/v1/me/grant-portfolio/digest") {
+      const digest = url.pathname.endsWith("/digest");
+      if (request.method !== (digest ? "POST" : "GET")) return methodNotAllowed(requestId);
+      const actor = resolveActor(request);
+      if (!actor) return unauthenticated(requestId);
+      return digest ? handleSendMyDigest(request, env, requestId, actor) : handleGetPortfolio(env, requestId, actor);
+    }
     const response = await routeOrg(request, env, requestId, url.pathname);
     return response ?? notFound(requestId, url.pathname);
   } catch {
