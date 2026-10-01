@@ -1,11 +1,19 @@
 {
   "name": "Grantwell Console",
   "short_name": "Grantwell",
-  "description": "Control plane for your projects, environments, and entitlements.",
+  "description": "Grant deadlines, deliverables and reports for nonprofits without a development team",
   "start_url": "/orgs",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#09090b",
-  "theme_color": "#09090b",
-  "orientation": "portrait-primary"
+  "background_color": "#fcfdfc",
+  "theme_color": "#fcfdfc",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
 }
